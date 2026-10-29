@@ -3,6 +3,8 @@
 
     <application
         android:allowBackup="true"
+        android:icon="@drawable/ibc_icon"
+        android:roundIcon="@drawable/ibc_icon"
         android:label="IBC APP"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
