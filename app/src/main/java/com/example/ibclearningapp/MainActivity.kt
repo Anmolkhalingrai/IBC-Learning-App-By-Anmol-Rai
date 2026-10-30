@@ -1384,4 +1384,45 @@ class MainActivity : Activity() {
                         )
                         .setNegativeButton("Cancel", null)
                         .setPositiveButton("Restore") { _, _ ->
+                            
               
+                            try {
+                                categories.clear()
+                                categories.addAll(newCategories)
+
+                                dishes.clear()
+                                dishes.addAll(newDishes)
+
+                                selectedCategory = "All"
+
+                                saveData()
+                                showHomeScreen()
+
+                                Toast.makeText(
+                                    this,
+                                    "Backup restored successfully",
+                                    Toast.LENGTH_LONG
+                                ).show()
+
+                            } catch (e: Exception) {
+                                Toast.makeText(
+                                    this,
+                                    "Restore failed: ${e.message}",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
+                        .show()
+
+                } catch (e: Exception) {
+                    Toast.makeText(
+                        this,
+                        "Invalid backup: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
+}
+
