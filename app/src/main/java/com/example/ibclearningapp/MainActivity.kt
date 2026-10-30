@@ -31,7 +31,7 @@ data class Dish(
 class MainActivity : Activity() {
 
     // Premium dark colour palette
-    private val background = Color.rgb(7, 19, 15)
+    private val bgColor = Color.rgb(7, 19, 15)
     private val forest = Color.rgb(10, 31, 24)
     private val panel = Color.rgb(17, 42, 32)
     private val panelLight = Color.rgb(24, 54, 41)
@@ -64,7 +64,7 @@ class MainActivity : Activity() {
     private lateinit var dishContainer: LinearLayout
     private lateinit var searchInput: EditText
 
-    // Keep this exact storage key to preserve existing saved entries.
+    // Keep the original storage key and JSON format.
     private val prefs by lazy {
         getSharedPreferences("IBC_MENU_DATA", MODE_PRIVATE)
     }
@@ -87,7 +87,6 @@ class MainActivity : Activity() {
         return GradientDrawable().apply {
             setColor(color)
             cornerRadius = dp(radius).toFloat()
-
             if (strokeColor != Color.TRANSPARENT) {
                 setStroke(dp(1), strokeColor)
             }
@@ -99,10 +98,9 @@ class MainActivity : Activity() {
             val saved = prefs.getString("menu", null) ?: return
             val root = JSONObject(saved)
 
-            categories.clear()
             val savedCategories = root.optJSONArray("categories")
-
             if (savedCategories != null) {
+                categories.clear()
                 for (i in 0 until savedCategories.length()) {
                     categories.add(savedCategories.getString(i))
                 }
@@ -114,7 +112,6 @@ class MainActivity : Activity() {
             if (savedDishes != null) {
                 for (i in 0 until savedDishes.length()) {
                     val item = savedDishes.getJSONObject(i)
-
                     dishes.add(
                         Dish(
                             id = item.optString(
@@ -133,11 +130,11 @@ class MainActivity : Activity() {
                     )
                 }
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
             Toast.makeText(
                 this,
-                "Could not load menu",
-                Toast.LENGTH_SHORT
+                "Could not load menu: ${e.message}",
+                Toast.LENGTH_LONG
             ).show()
         }
     }
@@ -148,9 +145,7 @@ class MainActivity : Activity() {
             val categoryArray = JSONArray()
             val dishArray = JSONArray()
 
-            categories.forEach {
-                categoryArray.put(it)
-            }
+            categories.forEach { categoryArray.put(it) }
 
             dishes.forEach { dish ->
                 val item = JSONObject()
@@ -170,12 +165,11 @@ class MainActivity : Activity() {
             root.put("dishes", dishArray)
 
             prefs.edit().putString("menu", root.toString()).apply()
-
-        } catch (_: Exception) {
+        } catch (e: Exception) {
             Toast.makeText(
                 this,
-                "Could not save menu",
-                Toast.LENGTH_SHORT
+                "Could not save menu: ${e.message}",
+                Toast.LENGTH_LONG
             ).show()
         }
     }
@@ -185,13 +179,17 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
             setPadding(dp(28), dp(28), dp(28), dp(28))
-            background = rounded(background, 0)
+            background = rounded(bgColor, 0)
         }
 
-        root.addView(text("✦", 42f, gold, true))
-        root.addView(text("I B C", 43f, cream, true))
-        root.addView(text("MENU MANAGEMENT", 13f, gold, true))
-        root.addView(text("BY ANMOL RAI", 11f, muted))
+        root.addView(text("✦", 42f, gold, true, Gravity.CENTER))
+        root.addView(text("I B C", 43f, cream, true, Gravity.CENTER))
+        root.addView(
+            text("MENU MANAGEMENT", 13f, gold, true, Gravity.CENTER)
+        )
+        root.addView(
+            text("BY ANMOL RAI", 11f, muted, false, Gravity.CENTER)
+        )
 
         setContentView(root)
 
@@ -212,14 +210,12 @@ class MainActivity : Activity() {
             textSize = size
             setTextColor(color)
             gravity = align
-
             if (bold) {
                 typeface = Typeface.create(
                     "sans-serif",
                     Typeface.BOLD
                 )
             }
-
             setPadding(dp(3), dp(4), dp(3), dp(4))
         }
     }
@@ -234,7 +230,7 @@ class MainActivity : Activity() {
             textSize = if (compact) 12f else 13f
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
-            setTextColor(if (filled) background else gold)
+            setTextColor(if (filled) bgColor else gold)
             setPadding(
                 dp(if (compact) 13 else 16),
                 dp(if (compact) 10 else 14),
@@ -260,18 +256,16 @@ class MainActivity : Activity() {
         }
 
         layout.addView(text(heading, 17f, cream, true))
-
         if (subtitle.isNotBlank()) {
             layout.addView(text(subtitle, 11f, muted))
         }
-
         return layout
     }
 
     private fun showHomeScreen() {
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(background)
+            setBackgroundColor(bgColor)
         }
 
         val scroll = ScrollView(this).apply {
@@ -281,14 +275,13 @@ class MainActivity : Activity() {
 
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(17), dp(12), dp(17), dp(24))
+            setPadding(dp(18), dp(20), dp(18), dp(25))
         }
 
-        // Premium brand header
         val header = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), dp(22), dp(20), dp(22))
-            background = rounded(forest, 22, line)
+            setPadding(dp(18), dp(18), dp(18), dp(18))
+            background = rounded(forest, 20, line)
         }
 
         val brandRow = LinearLayout(this).apply {
@@ -335,16 +328,13 @@ class MainActivity : Activity() {
             }
         )
 
-        header.addView(
-            text("WELCOME BACK", 10f, gold, true)
-        )
+        header.addView(text("WELCOME BACK", 10f, gold, true))
         header.addView(
             text("Your menu, beautifully managed.", 15f, cream)
         )
 
         content.addView(header)
 
-        // Dashboard statistics
         content.addView(
             sectionTitle("Overview", "A quick look at your menu"),
             LinearLayout.LayoutParams(-1, -2).apply {
@@ -371,7 +361,6 @@ class MainActivity : Activity() {
 
         content.addView(stats)
 
-        // Search
         content.addView(
             sectionTitle("Find a dish", "Search by dish or menu section"),
             LinearLayout.LayoutParams(-1, -2).apply {
@@ -395,7 +384,6 @@ class MainActivity : Activity() {
             LinearLayout.LayoutParams(-1, dp(52))
         )
 
-        // Menu section selector
         content.addView(
             sectionTitle("Menu sections", "Choose a section to browse"),
             LinearLayout.LayoutParams(-1, -2).apply {
@@ -445,25 +433,21 @@ class MainActivity : Activity() {
         }
 
         categoryScroll.addView(categoryRow)
-
         content.addView(
             categoryScroll,
             LinearLayout.LayoutParams(-1, dp(48))
         )
 
-        // Main actions
         val actions = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
         }
 
         val addDish = actionButton("+  ADD DISH", true)
-
         addDish.setOnClickListener {
             showDishEditor(null)
         }
 
         val manageSections = actionButton("MANAGE SECTIONS", false)
-
         manageSections.setOnClickListener {
             manageCategories()
         }
@@ -488,14 +472,11 @@ class MainActivity : Activity() {
             }
         )
 
-        // Dish list
         val currentHeading =
             if (selectedCategory == "All") "ALL DISHES"
             else selectedCategory.uppercase()
 
-        content.addView(
-            text(currentHeading, 17f, gold, true)
-        )
+        content.addView(text(currentHeading, 17f, gold, true))
 
         content.addView(
             text(
@@ -519,9 +500,7 @@ class MainActivity : Activity() {
             }
         )
 
-        // Backup action
         val backup = actionButton("↥   BACKUP & RESTORE", false)
-
         backup.setOnClickListener {
             showBackupInfo()
         }
@@ -533,27 +512,21 @@ class MainActivity : Activity() {
             }
         )
 
-        val footer = text(
-            "IBC APP  •  CRAFTED FOR BETTER SERVICE",
-            9f,
-            muted,
-            true,
-            Gravity.CENTER
-        )
-
         content.addView(
-            footer,
+            text(
+                "IBC APP  •  CRAFTED FOR BETTER SERVICE",
+                9f,
+                muted,
+                true,
+                Gravity.CENTER
+            ),
             LinearLayout.LayoutParams(-1, -2).apply {
                 topMargin = dp(20)
             }
         )
 
         scroll.addView(content)
-        root.addView(
-            scroll,
-            LinearLayout.LayoutParams(-1, -1)
-        )
-
+        root.addView(scroll, LinearLayout.LayoutParams(-1, -1))
         setContentView(root)
 
         searchInput.setText(searchText)
@@ -598,7 +571,6 @@ class MainActivity : Activity() {
         card.addView(text(symbol, 15f, gold, true))
         card.addView(text(value, 25f, cream, true))
         card.addView(text(label, 9f, muted, true))
-
         return card
     }
 
@@ -611,7 +583,7 @@ class MainActivity : Activity() {
             textSize = 12f
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
-            setTextColor(if (selected) background else cream)
+            setTextColor(if (selected) bgColor else cream)
             setPadding(dp(15), 0, dp(15), 0)
             background = rounded(
                 if (selected) gold else panel,
@@ -627,7 +599,6 @@ class MainActivity : Activity() {
         dishContainer.removeAllViews()
 
         val filtered = dishes.filter { dish ->
-
             val matchesCategory =
                 selectedCategory == "All" ||
                 dish.category == selectedCategory
@@ -647,7 +618,9 @@ class MainActivity : Activity() {
                 background = rounded(panel, 18, line)
             }
 
-            empty.addView(text("✦", 28f, gold, true, Gravity.CENTER))
+            empty.addView(
+                text("✦", 28f, gold, true, Gravity.CENTER)
+            )
             empty.addView(
                 text(
                     "No dishes found",
@@ -695,13 +668,296 @@ class MainActivity : Activity() {
                 card.addView(
                     imageView,
                     LinearLayout.LayoutParams(-1, dp(190)).apply {
-                            private fun editPrice(dish: Dish) {
+                        bottomMargin = dp(12)
+                    }
+                )
+            } catch (_: Exception) {
+                // Continue showing the dish if its picture is unavailable.
+            }
+        }
+
+        val titleRow = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+
+        val nameView = text(dish.name, 17f, cream, true)
+        titleRow.addView(
+            nameView,
+            LinearLayout.LayoutParams(0, -2, 1f)
+        )
+
+        val priceView = TextView(this).apply {
+            text = "OMR ${dish.price}"
+            textSize = 13f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(bgColor)
+            gravity = Gravity.CENTER
+            setPadding(dp(11), dp(8), dp(11), dp(8))
+            background = rounded(gold, 11)
+        }
+
+        titleRow.addView(priceView)
+        card.addView(titleRow)
+
+        card.addView(
+            text(dish.category.uppercase(), 10f, gold, true)
+        )
+
+        if (dish.ingredients.isNotBlank()) {
+            infoLine(card, "INGREDIENTS", dish.ingredients)
+        }
+
+        if (dish.gsa.isNotBlank()) {
+            infoLine(card, "GSA", dish.gsa)
+        }
+
+        if (dish.allergens.isNotBlank()) {
+            infoLine(card, "ALLERGENS", dish.allergens)
+        }
+
+        if (dish.addons.isNotBlank()) {
+            infoLine(card, "ADD-ONS", dish.addons)
+        }
+
+        val options = actionButton("•••   DISH OPTIONS", false, true)
+        options.setOnClickListener {
+            showDishOptions(dish)
+        }
+
+        card.addView(
+            options,
+            LinearLayout.LayoutParams(-1, dp(42)).apply {
+                topMargin = dp(12)
+            }
+        )
+
+        card.setOnClickListener {
+            showDishOptions(dish)
+        }
+
+        val outer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(
+                card,
+                LinearLayout.LayoutParams(-1, -2)
+            )
+        }
+
+        outer.setPadding(0, 0, 0, dp(12))
+        return outer
+    }
+
+    private fun infoLine(
+        parent: LinearLayout,
+        label: String,
+        value: String
+    ) {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, dp(5), 0, dp(3))
+        }
+
+        row.addView(text(label, 9f, gold, true))
+        row.addView(text(value, 12f, muted))
+        parent.addView(row)
+    }
+        private fun showDishOptions(dish: Dish) {
+        val options = arrayOf(
+            "Ingredients",
+            "GSA – Gold Standard Attribute",
+            "Allergens",
+            "Manage Add-ons",
+            "Edit Dish",
+            "Edit Price",
+            "Change Food Picture",
+            "Delete Dish"
+        )
+
+        AlertDialog.Builder(this)
+            .setTitle(dish.name)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> editInformation(dish, "Ingredients")
+                    1 -> editInformation(dish, "GSA")
+                    2 -> editInformation(dish, "Allergens")
+                    3 -> manageAddons(dish)
+                    4 -> showDishEditor(dish)
+                    5 -> editPrice(dish)
+                    6 -> chooseFoodPicture(dish)
+                    7 -> deleteDish(dish)
+                }
+            }
+            .show()
+    }
+
+    private fun showDishEditor(existing: Dish?) {
+        val nameInput = EditText(this).apply {
+            hint = "Dish name"
+            setText(existing?.name ?: "")
+            setTextColor(cream)
+            setHintTextColor(muted)
+        }
+
+        val priceInput = EditText(this).apply {
+            hint = "Price in OMR"
+            inputType =
+                android.text.InputType.TYPE_CLASS_NUMBER or
+                android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+            setText(existing?.price ?: "")
+            setTextColor(cream)
+            setHintTextColor(muted)
+        }
+
+        val categorySpinner = Spinner(this)
+        val categoryOptions = categories.toMutableList()
+
+        if (categoryOptions.isEmpty()) {
+            categoryOptions.add("Uncategorized")
+        }
+
+        categorySpinner.adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_dropdown_item,
+            categoryOptions
+        )
+
+        val currentIndex = categoryOptions.indexOf(existing?.category)
+        if (currentIndex >= 0) {
+            categorySpinner.setSelection(currentIndex)
+        }
+
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(8), dp(20), dp(8))
+            addView(text("DISH NAME", 10f, gold, true))
+            addView(nameInput)
+            addView(text("PRICE (OMR)", 10f, gold, true))
+            addView(priceInput)
+            addView(text("MENU SECTION", 10f, gold, true))
+            addView(categorySpinner)
+        }
+
+        val scroll = ScrollView(this).apply {
+            addView(layout)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(if (existing == null) "Add New Dish" else "Edit Dish")
+            .setView(scroll)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Save") { _, _ ->
+                val name = nameInput.text.toString().trim()
+                val price = priceInput.text.toString().trim()
+                val category = categorySpinner.selectedItem.toString()
+
+                if (name.isEmpty() || price.isEmpty()) {
+                    Toast.makeText(
+                        this,
+                        "Enter both dish name and price",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@setPositiveButton
+                }
+
+                if (existing == null) {
+                    dishes.add(
+                        Dish(
+                            id = UUID.randomUUID().toString(),
+                            name = name,
+                            price = price,
+                            category = category
+                        )
+                    )
+                } else {
+                    existing.name = name
+                    existing.price = price
+                    existing.category = category
+                }
+
+                saveData()
+                showHomeScreen()
+            }
+            .show()
+    }
+
+    private fun editInformation(dish: Dish, type: String) {
+        val currentValue = when (type) {
+            "Ingredients" -> dish.ingredients
+            "GSA" -> dish.gsa
+            else -> dish.allergens
+        }
+
+        val input = EditText(this).apply {
+            hint = "Enter $type"
+            setText(currentValue)
+            setTextColor(cream)
+            setHintTextColor(muted)
+            minLines = 3
+            gravity = Gravity.TOP
+        }
+
+        val scroll = ScrollView(this).apply {
+            setPadding(dp(18), dp(8), dp(18), dp(8))
+            addView(input)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("$type – ${dish.name}")
+            .setView(scroll)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Save") { _, _ ->
+                val value = input.text.toString().trim()
+
+                when (type) {
+                    "Ingredients" -> dish.ingredients = value
+                    "GSA" -> dish.gsa = value
+                    "Allergens" -> dish.allergens = value
+                }
+
+                saveData()
+                showHomeScreen()
+            }
+            .show()
+    }
+
+    private fun manageAddons(dish: Dish) {
+        val input = EditText(this).apply {
+            hint = "Example:\nExtra cheese - 0.500\nExtra sauce - 0.300"
+            setText(dish.addons)
+            setTextColor(cream)
+            setHintTextColor(muted)
+            minLines = 4
+            gravity = Gravity.TOP
+        }
+
+        val scroll = ScrollView(this).apply {
+            setPadding(dp(18), dp(8), dp(18), dp(8))
+            addView(input)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Manage Add-ons")
+            .setMessage("Enter each add-on on a separate line.")
+            .setView(scroll)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Save") { _, _ ->
+                dish.addons = input.text.toString().trim()
+                saveData()
+                showHomeScreen()
+            }
+            .show()
+    }
+
+    private fun editPrice(dish: Dish) {
         val input = EditText(this).apply {
             hint = "Price in OMR"
             inputType =
                 android.text.InputType.TYPE_CLASS_NUMBER or
                 android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
             setText(dish.price)
+            setTextColor(cream)
+            setHintTextColor(muted)
         }
 
         AlertDialog.Builder(this)
@@ -709,7 +965,6 @@ class MainActivity : Activity() {
             .setView(input)
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Save") { _, _ ->
-
                 val price = input.text.toString().trim()
 
                 if (price.isEmpty()) {
@@ -743,12 +998,9 @@ class MainActivity : Activity() {
     private fun deleteDish(dish: Dish) {
         AlertDialog.Builder(this)
             .setTitle("Delete Dish")
-            .setMessage(
-                "Are you sure you want to delete ${dish.name}?"
-            )
+            .setMessage("Are you sure you want to delete ${dish.name}?")
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Delete") { _, _ ->
-
                 dishes.remove(dish)
                 saveData()
                 showHomeScreen()
@@ -784,6 +1036,8 @@ class MainActivity : Activity() {
     private fun addCategory() {
         val input = EditText(this).apply {
             hint = "Enter new section name"
+            setTextColor(cream)
+            setHintTextColor(muted)
         }
 
         AlertDialog.Builder(this)
@@ -791,7 +1045,6 @@ class MainActivity : Activity() {
             .setView(input)
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Add") { _, _ ->
-
                 val name = input.text.toString().trim()
 
                 if (name.isEmpty()) {
@@ -800,7 +1053,6 @@ class MainActivity : Activity() {
                         "Enter section name",
                         Toast.LENGTH_SHORT
                     ).show()
-
                 } else if (
                     categories.any { it.equals(name, true) }
                 ) {
@@ -809,7 +1061,6 @@ class MainActivity : Activity() {
                         "Section already exists",
                         Toast.LENGTH_SHORT
                     ).show()
-
                 } else {
                     categories.add(name)
                     saveData()
@@ -830,7 +1081,6 @@ class MainActivity : Activity() {
         }
 
         val spinner = Spinner(this)
-
         spinner.adapter = ArrayAdapter(
             this,
             android.R.layout.simple_spinner_dropdown_item,
@@ -839,6 +1089,8 @@ class MainActivity : Activity() {
 
         val input = EditText(this).apply {
             hint = "New section name"
+            setTextColor(cream)
+            setHintTextColor(muted)
         }
 
         val layout = LinearLayout(this).apply {
@@ -854,7 +1106,6 @@ class MainActivity : Activity() {
             .setView(layout)
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Rename") { _, _ ->
-
                 val oldName = spinner.selectedItem.toString()
                 val newName = input.text.toString().trim()
 
@@ -865,7 +1116,9 @@ class MainActivity : Activity() {
                     }
                 ) {
                     val index = categories.indexOf(oldName)
-                    categories[index] = newName
+                    if (index >= 0) {
+                        categories[index] = newName
+                    }
 
                     dishes.filter {
                         it.category == oldName
@@ -879,7 +1132,6 @@ class MainActivity : Activity() {
 
                     saveData()
                     showHomeScreen()
-
                 } else {
                     Toast.makeText(
                         this,
@@ -902,7 +1154,6 @@ class MainActivity : Activity() {
         }
 
         val spinner = Spinner(this)
-
         spinner.adapter = ArrayAdapter(
             this,
             android.R.layout.simple_spinner_dropdown_item,
@@ -917,7 +1168,6 @@ class MainActivity : Activity() {
             .setView(spinner)
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Delete") { _, _ ->
-
                 val category = spinner.selectedItem.toString()
 
                 dishes.filter {
@@ -966,7 +1216,6 @@ class MainActivity : Activity() {
 
         dishes.forEach { dish ->
             val item = JSONObject()
-
             item.put("id", dish.id)
             item.put("name", dish.name)
             item.put("price", dish.price)
@@ -976,7 +1225,6 @@ class MainActivity : Activity() {
             item.put("allergens", dish.allergens)
             item.put("addons", dish.addons)
             item.put("image", dish.image)
-
             dishArray.put(item)
         }
 
@@ -1025,7 +1273,6 @@ class MainActivity : Activity() {
         val uri = data?.data ?: return
 
         when (requestCode) {
-
             IMAGE_REQUEST -> {
                 try {
                     val flags =
@@ -1037,12 +1284,11 @@ class MainActivity : Activity() {
                             flags
                         )
                     } catch (_: Exception) {
-                        // Keep going if persistent permission is unavailable.
+                        // Continue if persistent permission is unavailable.
                     }
 
                     pendingImageDish?.image = uri.toString()
                     saveData()
-
                     pendingImageDish = null
                     showHomeScreen()
 
@@ -1051,10 +1297,8 @@ class MainActivity : Activity() {
                         "Food picture updated",
                         Toast.LENGTH_SHORT
                     ).show()
-
                 } catch (e: Exception) {
                     pendingImageDish = null
-
                     Toast.makeText(
                         this,
                         "Could not load picture: ${e.message}",
@@ -1076,7 +1320,6 @@ class MainActivity : Activity() {
                         "Backup exported successfully",
                         Toast.LENGTH_LONG
                     ).show()
-
                 } catch (e: Exception) {
                     Toast.makeText(
                         this,
@@ -1099,13 +1342,11 @@ class MainActivity : Activity() {
                     }
 
                     val root = JSONObject(content)
-
                     val newCategories = mutableListOf<String>()
                     val newDishes = mutableListOf<Dish>()
 
                     val categoryArray =
                         root.getJSONArray("categories")
-
                     val dishArray =
                         root.getJSONArray("dishes")
 
@@ -1143,35 +1384,4 @@ class MainActivity : Activity() {
                         )
                         .setNegativeButton("Cancel", null)
                         .setPositiveButton("Restore") { _, _ ->
-
-                            categories.clear()
-                            categories.addAll(newCategories)
-
-                            dishes.clear()
-                            dishes.addAll(newDishes)
-
-                            selectedCategory = "All"
-                            searchText = ""
-
-                            saveData()
-                            showHomeScreen()
-
-                            Toast.makeText(
-                                this,
-                                "Backup restored successfully",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                        .show()
-
-                } catch (e: Exception) {
-                    Toast.makeText(
-                        this,
-                        "Invalid backup file: ${e.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
-        }
-    }
-                    }
+              
