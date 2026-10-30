@@ -1,4 +1,3 @@
-
 package com.example.ibclearningapp
 
 import android.app.Activity
@@ -31,14 +30,17 @@ data class Dish(
 
 class MainActivity : Activity() {
 
+    // Premium dark colour palette
     private val bgColor = Color.rgb(7, 19, 15)
     private val forest = Color.rgb(10, 31, 24)
     private val panel = Color.rgb(17, 42, 32)
     private val panelLight = Color.rgb(24, 54, 41)
+    private val green = Color.rgb(39, 91, 65)
     private val gold = Color.rgb(218, 181, 108)
     private val cream = Color.rgb(246, 241, 229)
     private val muted = Color.rgb(164, 177, 166)
     private val line = Color.rgb(48, 75, 59)
+    private val red = Color.rgb(190, 83, 76)
 
     private val IMAGE_REQUEST = 1001
     private val EXPORT_REQUEST = 1002
@@ -55,13 +57,14 @@ class MainActivity : Activity() {
     )
 
     private val dishes = mutableListOf<Dish>()
+
     private var selectedCategory = "All"
     private var searchText = ""
 
     private lateinit var dishContainer: LinearLayout
     private lateinit var searchInput: EditText
 
-    // Keep the same storage key so existing saved menu data is retained.
+    // Keep the original storage key and JSON format.
     private val prefs by lazy {
         getSharedPreferences("IBC_MENU_DATA", MODE_PRIVATE)
     }
@@ -87,50 +90,6 @@ class MainActivity : Activity() {
             if (strokeColor != Color.TRANSPARENT) {
                 setStroke(dp(1), strokeColor)
             }
-        }
-    }
-
-    private fun text(
-        value: String,
-        size: Float,
-        color: Int,
-        bold: Boolean = false,
-        align: Int = Gravity.START
-    ): TextView {
-        return TextView(this).apply {
-            text = value
-            textSize = size
-            setTextColor(color)
-            gravity = align
-            if (bold) typeface = Typeface.DEFAULT_BOLD
-            setPadding(dp(3), dp(4), dp(3), dp(4))
-        }
-    }
-
-    private fun actionButton(
-        value: String,
-        filled: Boolean = true,
-        compact: Boolean = false
-    ): TextView {
-        return TextView(this).apply {
-            text = value
-            textSize = if (compact) 12f else 13f
-            typeface = Typeface.DEFAULT_BOLD
-            gravity = Gravity.CENTER
-            setTextColor(if (filled) bgColor else gold)
-            setPadding(
-                dp(if (compact) 13 else 16),
-                dp(if (compact) 10 else 14),
-                dp(if (compact) 13 else 16),
-                dp(if (compact) 10 else 14)
-            )
-            background = rounded(
-                if (filled) gold else panelLight,
-                13,
-                if (filled) gold else line
-            )
-            isClickable = true
-            isFocusable = true
         }
     }
 
@@ -239,23 +198,71 @@ class MainActivity : Activity() {
         }, 2500)
     }
 
-    private fun categoryButton(
-        label: String,
-        selected: Boolean
+    private fun text(
+        value: String,
+        size: Float,
+        color: Int,
+        bold: Boolean = false,
+        align: Int = Gravity.START
     ): TextView {
         return TextView(this).apply {
-            text = label
-            textSize = 12f
+            text = value
+            textSize = size
+            setTextColor(color)
+            gravity = align
+            if (bold) {
+                typeface = Typeface.create(
+                    "sans-serif",
+                    Typeface.BOLD
+                )
+            }
+            setPadding(dp(3), dp(4), dp(3), dp(4))
+        }
+    }
+
+    private fun actionButton(
+        value: String,
+        filled: Boolean = true,
+        compact: Boolean = false
+    ): TextView {
+        return TextView(this).apply {
+            text = value
+            textSize = if (compact) 12f else 13f
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
-            setTextColor(if (selected) bgColor else cream)
-            setPadding(dp(15), 0, dp(15), 0)
-            background = rounded(
-                if (selected) gold else panel,
-                13,
-                if (selected) gold else line
+            setTextColor(if (filled) bgColor else gold)
+            setPadding(
+                dp(if (compact) 13 else 16),
+                dp(if (compact) 10 else 14),
+                dp(if (compact) 13 else 16),
+                dp(if (compact) 10 else 14)
             )
+            background = rounded(
+                if (filled) gold else panelLight,
+                13,
+                if (filled) gold else line
+            )
+            isClickable = true
+            isFocusable = true
         }
+    }
+
+    private fun sectionTitle(
+        heading: String,
+        subtitle: String = ""
+    ): LinearLayout {
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+
+        layout.addView(text(heading, 17f, cream, true))
+        if (subtitle.isNotBlank()) {
+            layout.addView(text(subtitle, 11f, muted))
+        }
+        return layout
+    }
+            }
+        return layout
     }
 
     private fun showHomeScreen() {
@@ -311,15 +318,31 @@ class MainActivity : Activity() {
 
         brandRow.addView(brandMark)
         header.addView(brandRow)
+
+        val divider = android.view.View(this).apply {
+            setBackgroundColor(line)
+        }
+
+        header.addView(
+            divider,
+            LinearLayout.LayoutParams(-1, dp(1)).apply {
+                topMargin = dp(17)
+                bottomMargin = dp(13)
+            }
+        )
+
         header.addView(text("WELCOME BACK", 10f, gold, true))
         header.addView(
             text("Your menu, beautifully managed.", 15f, cream)
         )
+
         content.addView(header)
 
         content.addView(
-            text("Find a dish", 17f, cream, true).apply {
-                setPadding(0, dp(20), 0, dp(7))
+            sectionTitle("Find a dish", "Search by dish or menu section"),
+            LinearLayout.LayoutParams(-1, -2).apply {
+                topMargin = dp(23)
+                bottomMargin = dp(10)
             }
         )
 
@@ -339,8 +362,10 @@ class MainActivity : Activity() {
         )
 
         content.addView(
-            text("MENU SECTIONS", 17f, cream, true).apply {
-                setPadding(0, dp(20), 0, dp(8))
+            sectionTitle("Menu sections", "Choose a section to browse"),
+            LinearLayout.LayoutParams(-1, -2).apply {
+                topMargin = dp(23)
+                bottomMargin = dp(10)
             }
         )
 
@@ -357,10 +382,12 @@ class MainActivity : Activity() {
             "All",
             selectedCategory == "All"
         )
+
         allButton.setOnClickListener {
             selectedCategory = "All"
             showHomeScreen()
         }
+
         categoryRow.addView(allButton)
 
         categories.forEach { category ->
@@ -368,10 +395,12 @@ class MainActivity : Activity() {
                 category,
                 selectedCategory == category
             )
+
             categoryView.setOnClickListener {
                 selectedCategory = category
                 showHomeScreen()
             }
+
             categoryRow.addView(
                 categoryView,
                 LinearLayout.LayoutParams(-2, dp(42)).apply {
@@ -404,6 +433,7 @@ class MainActivity : Activity() {
             addDish,
             LinearLayout.LayoutParams(0, dp(49), 1f)
         )
+
         actions.addView(
             manageSections,
             LinearLayout.LayoutParams(0, dp(49), 1f).apply {
@@ -414,25 +444,23 @@ class MainActivity : Activity() {
         content.addView(
             actions,
             LinearLayout.LayoutParams(-1, dp(49)).apply {
-                topMargin = dp(17)
-                bottomMargin = dp(20)
+                topMargin = dp(19)
+                bottomMargin = dp(21)
             }
         )
 
-        val heading = if (selectedCategory == "All") {
-            "ALL DISHES"
-        } else {
-            selectedCategory.uppercase()
-        }
+        val currentHeading =
+            if (selectedCategory == "All") "ALL DISHES"
+            else selectedCategory.uppercase()
 
-        content.addView(text(heading, 17f, gold, true))
+        content.addView(text(currentHeading, 17f, gold, true))
 
         content.addView(
             text(
                 "${dishes.count {
                     selectedCategory == "All" ||
                     it.category == selectedCategory
-                }} items",
+                }} items in this view",
                 11f,
                 muted
             )
@@ -449,13 +477,13 @@ class MainActivity : Activity() {
             }
         )
 
-        val moreOptions = actionButton("•••   MORE OPTIONS", false)
-        moreOptions.setOnClickListener {
+        val backup = actionButton("⋮   MORE OPTIONS", false)
+        backup.setOnClickListener {
             showBackupInfo()
         }
 
         content.addView(
-            moreOptions,
+            backup,
             LinearLayout.LayoutParams(-1, dp(49)).apply {
                 topMargin = dp(22)
             }
@@ -504,6 +532,24 @@ class MainActivity : Activity() {
 
         renderDishes()
     }
+        private fun categoryButton(
+        label: String,
+        selected: Boolean
+    ): TextView {
+        return TextView(this).apply {
+            text = label
+            textSize = 12f
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setTextColor(if (selected) bgColor else cream)
+            setPadding(dp(15), 0, dp(15), 0)
+            background = rounded(
+                if (selected) gold else panel,
+                13,
+                if (selected) gold else line
+            )
+        }
+    }
 
     private fun renderDishes() {
         if (!::dishContainer.isInitialized) return
@@ -530,9 +576,17 @@ class MainActivity : Activity() {
                 background = rounded(panel, 18, line)
             }
 
-            empty.addView(text("✦", 28f, gold, true, Gravity.CENTER))
             empty.addView(
-                text("No dishes found", 16f, cream, true, Gravity.CENTER)
+                text("✦", 28f, gold, true, Gravity.CENTER)
+            )
+            empty.addView(
+                text(
+                    "No dishes found",
+                    16f,
+                    cream,
+                    true,
+                    Gravity.CENTER
+                )
             )
             empty.addView(
                 text(
@@ -543,6 +597,7 @@ class MainActivity : Activity() {
                     Gravity.CENTER
                 )
             )
+
             dishContainer.addView(empty)
             return
         }
@@ -550,145 +605,120 @@ class MainActivity : Activity() {
         filtered.forEach { dish ->
             dishContainer.addView(dishCard(dish))
         }
-        
+    }
+
     private fun dishCard(dish: Dish): LinearLayout {
         val card = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(15), dp(12), dp(12), dp(12))
+            setPadding(dp(15), dp(13), dp(10), dp(13))
             background = rounded(panel, 16, line)
         }
 
-        val nameView = TextView(this).apply {
-            text = dish.name
-            textSize = 16f
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(cream)
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(3), dp(8), dp(8), dp(8))
+        val details = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, -2, 1f)
+        }
+
+        val name = text(dish.name, 15f, cream, true)
+        name.setOnClickListener { showDishDetails(dish) }
+        details.addView(name)
+        details.addView(text("Tap dish name for details", 10f, muted))
+        card.addView(details)
+
+        card.addView(
+            text("OMR ${dish.price}", 13f, gold, true),
+            LinearLayout.LayoutParams(-2, -2).apply {
+                leftMargin = dp(8)
+                rightMargin = dp(8)
+            }
+        )
+
+        val more = TextView(this).apply {
+            text = "⋮"
+            textSize = 25f
+            gravity = Gravity.CENTER
+            setTextColor(gold)
+            setPadding(dp(10), dp(2), dp(10), dp(2))
             isClickable = true
             isFocusable = true
-            setOnClickListener {
-                showDishDetails(dish)
-            }
+            setOnClickListener { showDishOptions(dish) }
         }
-
-        card.addView(
-            nameView,
-            LinearLayout.LayoutParams(0, -2, 1f)
-        )
-
-        val options = actionButton("•••", false, true)
-        options.setOnClickListener {
-            showDishOptions(dish)
-        }
-
-        card.addView(
-            options,
-            LinearLayout.LayoutParams(-2, dp(42))
-        )
-
-        return LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            addView(card, LinearLayout.LayoutParams(-1, -2))
-            setPadding(0, 0, 0, dp(9))
-        }
-    }
-
-    private fun infoLine(
-        parent: LinearLayout,
-        label: String,
-        value: String
-    ) {
-        val row = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(0, dp(5), 0, dp(3))
-        }
-
-        row.addView(text(label, 10f, gold, true))
-        row.addView(text(value, 13f, cream))
-        parent.addView(row)
+        card.addView(more)
+        card.setOnClickListener { showDishDetails(dish) }
+        return card
     }
 
     private fun showDishDetails(dish: Dish) {
-        val details = LinearLayout(this).apply {
+        val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), dp(10), dp(18), dp(14))
+            setPadding(dp(18), dp(8), dp(18), dp(8))
         }
 
         if (dish.image.isNotBlank()) {
             try {
                 val imageView = ImageView(this).apply {
                     setImageURI(Uri.parse(dish.image))
+                    adjustViewBounds = true
                     scaleType = ImageView.ScaleType.CENTER_CROP
                     background = rounded(panelLight, 14)
                     clipToOutline = true
                 }
-
-                details.addView(
+                layout.addView(
                     imageView,
-                    LinearLayout.LayoutParams(-1, dp(205)).apply {
+                    LinearLayout.LayoutParams(-1, dp(190)).apply {
                         bottomMargin = dp(12)
                     }
                 )
             } catch (_: Exception) {
-                details.addView(
-                    text("Picture could not be loaded", 12f, muted)
-                )
+                // Continue showing text details if the image cannot be loaded.
             }
         }
 
-        details.addView(text(dish.name, 23f, cream, true))
-        details.addView(text("OMR ${dish.price}", 18f, gold, true))
-        details.addView(
-            text("SECTION  •  ${dish.category}", 11f, muted, true)
-        )
+        layout.addView(text("OMR ${dish.price}", 17f, gold, true))
+        layout.addView(text("SECTION  •  ${dish.category}", 11f, muted, true))
 
-        infoLine(
-            details,
-            "INGREDIENTS",
-            dish.ingredients.ifBlank { "Not added yet" }
-        )
-        infoLine(
-            details,
-            "GSA – GOLD STANDARD ATTRIBUTE",
-            dish.gsa.ifBlank { "Not added yet" }
-        )
-        infoLine(
-            details,
-            "ALLERGENS",
-            dish.allergens.ifBlank { "Not added yet" }
-        )
-        infoLine(
-            details,
-            "ADD-ONS",
-            dish.addons.ifBlank { "Not added yet" }
-        )
-
-        val optionsButton = actionButton("•••   DISH OPTIONS", false)
-        val scroll = ScrollView(this).apply {
-            addView(details)
+        if (dish.ingredients.isNotBlank()) {
+            layout.addView(infoLine("INGREDIENTS", dish.ingredients))
+        }
+        if (dish.gsa.isNotBlank()) {
+            layout.addView(infoLine("GOLD STANDARD ATTRIBUTE", dish.gsa))
+        }
+        if (dish.allergens.isNotBlank()) {
+            layout.addView(infoLine("ALLERGENS", dish.allergens))
+        }
+        if (dish.addons.isNotBlank()) {
+            layout.addView(infoLine("ADD-ONS", dish.addons))
         }
 
-        val dialog = AlertDialog.Builder(this)
-            .setTitle("Dish Details")
+        if (dish.ingredients.isBlank() && dish.gsa.isBlank() &&
+            dish.allergens.isBlank() && dish.addons.isBlank() &&
+            dish.image.isBlank()
+        ) {
+            layout.addView(
+                text("No additional details have been added yet.", 12f, muted)
+            )
+        }
+
+        val scroll = ScrollView(this).apply {
+            addView(layout)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(dish.name)
             .setView(scroll)
             .setPositiveButton("Close", null)
-            .create()
+            .show()
+    }
 
-        optionsButton.setOnClickListener {
-            dialog.dismiss()
-            showDishOptions(dish)
+    private fun infoLine(label: String, value: String): LinearLayout {
+        val block = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, dp(9), 0, dp(5))
         }
-
-        details.addView(
-            optionsButton,
-            LinearLayout.LayoutParams(-1, dp(46)).apply {
-                topMargin = dp(14)
-            }
-        )
-
-        dialog.show()
+        block.addView(text(label, 10f, gold, true))
+        block.addView(text(value, 13f, cream))
+        return block
     }
 
     private fun showDishOptions(dish: Dish) {
@@ -744,14 +774,7 @@ class MainActivity : Activity() {
         if (categoryOptions.isEmpty()) {
             categoryOptions.add("Uncategorized")
         }
-
-        categorySpinner.adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
-            categoryOptions
-        )
-
-        val currentIndex = categoryOptions.indexOf(existing?.category)
+                val currentIndex = categoryOptions.indexOf(existing?.category)
         if (currentIndex >= 0) {
             categorySpinner.setSelection(currentIndex)
         }
@@ -982,7 +1005,9 @@ class MainActivity : Activity() {
                         "Enter section name",
                         Toast.LENGTH_SHORT
                     ).show()
-                } else if (categories.any { it.equals(name, true) }) {
+                } else if (
+                    categories.any { it.equals(name, true) }
+                ) {
                     Toast.makeText(
                         this,
                         "Section already exists",
@@ -1013,8 +1038,7 @@ class MainActivity : Activity() {
             android.R.layout.simple_spinner_dropdown_item,
             categories
         )
-
-        val input = EditText(this).apply {
+                val input = EditText(this).apply {
             hint = "New section name"
             setTextColor(cream)
             setHintTextColor(muted)
@@ -1043,7 +1067,9 @@ class MainActivity : Activity() {
                     }
                 ) {
                     val index = categories.indexOf(oldName)
-                    if (index >= 0) categories[index] = newName
+                    if (index >= 0) {
+                        categories[index] = newName
+                    }
 
                     dishes.filter {
                         it.category == oldName
@@ -1115,12 +1141,12 @@ class MainActivity : Activity() {
 
     private fun showBackupInfo() {
         val options = arrayOf(
-            "Backup Menu (Export)",
-            "Restore Menu (Import)"
+            "Export Menu Backup",
+            "Import Menu Backup"
         )
 
         AlertDialog.Builder(this)
-            .setTitle("More Options")
+            .setTitle("Backup & Restore")
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> exportBackup()
@@ -1209,6 +1235,143 @@ class MainActivity : Activity() {
                             flags
                         )
                     } catch (_: Exception) {
-                      
+                        // Continue if persistent permission is unavailable.
+                    }
+
+                    pendingImageDish?.image = uri.toString()
+                    saveData()
+                    pendingImageDish = null
+                    showHomeScreen()
+
+                    Toast.makeText(
+                        this,
+                        "Food picture updated",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } catch (e: Exception) {
+                    pendingImageDish = null
+                    Toast.makeText(
+                        this,
+                        "Could not load picture: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+
+            EXPORT_REQUEST -> {
+                try {
+                    contentResolver.openOutputStream(uri)?.use { output ->
+                        output.write(
+                            createBackup().toByteArray(Charsets.UTF_8)
+                        )
+                    } ?: throw Exception("Could not open backup file")
+
+                    Toast.makeText(
+                        this,
+                        "Backup exported successfully",
+                        Toast.LENGTH_LONG
+                    ).show()
+                } catch (e: Exception) {
+                    Toast.makeText(
+                        this,
+                        "Export failed: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+
+            IMPORT_REQUEST -> {
+                try {
+                    val content = contentResolver
+                        .openInputStream(uri)
+                        ?.bufferedReader()
+                        ?.use { it.readText() }
+                        ?: throw Exception("Could not read file")
+
+                    if (content.isBlank()) {
+                        throw Exception("Empty backup file")
+                    }
+
+                    val root = JSONObject(content)
+                                        val newCategories = mutableListOf<String>()
+                    val newDishes = mutableListOf<Dish>()
+
+                    val categoryArray =
+                        root.getJSONArray("categories")
+                    val dishArray =
+                        root.getJSONArray("dishes")
+
+                    for (i in 0 until categoryArray.length()) {
+                        newCategories.add(
+                            categoryArray.getString(i)
+                        )
+                    }
+
+                    for (i in 0 until dishArray.length()) {
+                        val item = dishArray.getJSONObject(i)
+
+                        newDishes.add(
+                            Dish(
+                                id = item.optString(
+                                    "id",
+                                    UUID.randomUUID().toString()
+                                ),
+                                name = item.optString("name"),
+                                price = item.optString("price"),
+                                category = item.optString("category"),
+                                ingredients = item.optString("ingredients"),
+                                gsa = item.optString("gsa"),
+                                allergens = item.optString("allergens"),
+                                addons = item.optString("addons"),
+                                image = item.optString("image")
+                            )
+                        )
+                    }
+
+                    AlertDialog.Builder(this)
+                        .setTitle("Restore Backup")
+                        .setMessage(
+                            "This will replace your current menu with the imported backup. Continue?"
+                        )
+                        .setNegativeButton("Cancel", null)
+                        .setPositiveButton("Restore") { _, _ ->
+
+                            try {
+                                categories.clear()
+                                categories.addAll(newCategories)
+
+                                dishes.clear()
+                                dishes.addAll(newDishes)
+
+                                selectedCategory = "All"
+
+                                saveData()
+                                showHomeScreen()
+
+                                Toast.makeText(
+                                    this,
+                                    "Backup restored successfully",
+                                    Toast.LENGTH_LONG
+                                ).show()
+
+                            } catch (e: Exception) {
+                                Toast.makeText(
+                                    this,
+                                    "Restore failed: ${e.message}",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
+                        .show()
+
+                } catch (e: Exception) {
+                    Toast.makeText(
+                        this,
+                        "Invalid backup: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
     }
-    
+}
