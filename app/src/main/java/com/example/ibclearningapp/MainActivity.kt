@@ -261,9 +261,6 @@ class MainActivity : Activity() {
         }
         return layout
     }
-            }
-        return layout
-    }
 
     private fun showHomeScreen() {
         val root = LinearLayout(this).apply {
@@ -532,7 +529,77 @@ class MainActivity : Activity() {
 
         renderDishes()
     }
-        private fun categoryButton(
+                )
+        )
+
+        dishContainer = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+        }
+
+        content.addView(
+            dishContainer,
+            LinearLayout.LayoutParams(-1, -2).apply {
+                topMargin = dp(12)
+            }
+        )
+
+        val backup = actionButton("⋮   MORE OPTIONS", false)
+        backup.setOnClickListener {
+            showBackupInfo()
+        }
+
+        content.addView(
+            backup,
+            LinearLayout.LayoutParams(-1, dp(49)).apply {
+                topMargin = dp(22)
+            }
+        )
+
+        content.addView(
+            text(
+                "IBC APP  •  CRAFTED FOR BETTER SERVICE",
+                9f,
+                muted,
+                true,
+                Gravity.CENTER
+            ),
+            LinearLayout.LayoutParams(-1, -2).apply {
+                topMargin = dp(20)
+            }
+        )
+
+        scroll.addView(content)
+        root.addView(scroll, LinearLayout.LayoutParams(-1, -1))
+        setContentView(root)
+
+        searchInput.setText(searchText)
+        searchInput.setSelection(searchInput.text.length)
+
+        searchInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(
+                s: CharSequence?,
+                start: Int,
+                count: Int,
+                after: Int
+            ) {}
+
+            override fun onTextChanged(
+                s: CharSequence?,
+                start: Int,
+                before: Int,
+                count: Int
+            ) {
+                searchText = s.toString()
+                renderDishes()
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        renderDishes()
+    }
+
+    private fun categoryButton(
         label: String,
         selected: Boolean
     ): TextView {
@@ -774,7 +841,14 @@ class MainActivity : Activity() {
         if (categoryOptions.isEmpty()) {
             categoryOptions.add("Uncategorized")
         }
-                val currentIndex = categoryOptions.indexOf(existing?.category)
+
+        categorySpinner.adapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_dropdown_item,
+            categoryOptions
+        )
+
+        val currentIndex = categoryOptions.indexOf(existing?.category)
         if (currentIndex >= 0) {
             categorySpinner.setSelection(currentIndex)
         }
@@ -917,7 +991,7 @@ class MainActivity : Activity() {
             .setView(input)
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Save") { _, _ ->
-                val price = input.text.toString().trim()
+                                val price = input.text.toString().trim()
 
                 if (price.isEmpty()) {
                     Toast.makeText(
@@ -1038,7 +1112,8 @@ class MainActivity : Activity() {
             android.R.layout.simple_spinner_dropdown_item,
             categories
         )
-                val input = EditText(this).apply {
+
+        val input = EditText(this).apply {
             hint = "New section name"
             setTextColor(cream)
             setHintTextColor(muted)
@@ -1224,6 +1299,7 @@ class MainActivity : Activity() {
         val uri = data?.data ?: return
 
         when (requestCode) {
+
             IMAGE_REQUEST -> {
                 try {
                     val flags =
@@ -1248,8 +1324,10 @@ class MainActivity : Activity() {
                         "Food picture updated",
                         Toast.LENGTH_SHORT
                     ).show()
+
                 } catch (e: Exception) {
                     pendingImageDish = null
+
                     Toast.makeText(
                         this,
                         "Could not load picture: ${e.message}",
@@ -1271,6 +1349,7 @@ class MainActivity : Activity() {
                         "Backup exported successfully",
                         Toast.LENGTH_LONG
                     ).show()
+
                 } catch (e: Exception) {
                     Toast.makeText(
                         this,
@@ -1293,11 +1372,13 @@ class MainActivity : Activity() {
                     }
 
                     val root = JSONObject(content)
-                                        val newCategories = mutableListOf<String>()
+
+                    val newCategories = mutableListOf<String>()
                     val newDishes = mutableListOf<Dish>()
 
                     val categoryArray =
                         root.getJSONArray("categories")
+
                     val dishArray =
                         root.getJSONArray("dishes")
 
