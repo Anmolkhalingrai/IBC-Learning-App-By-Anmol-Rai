@@ -185,10 +185,10 @@ class MainActivity : Activity() {
         root.addView(text("✦", 42f, gold, true, Gravity.CENTER))
         root.addView(text("I B C", 43f, cream, true, Gravity.CENTER))
         root.addView(
-            text("MENU MANAGEMENT", 13f, gold, true, Gravity.CENTER)
+            text("IBC Learning App", 13f, gold, true, Gravity.CENTER)
         )
         root.addView(
-            text("BY ANMOL RAI", 11f, muted, false, Gravity.CENTER)
+            text("BY Anmol Rai", 11f, muted, false, Gravity.CENTER)
         )
 
         setContentView(root)
@@ -293,9 +293,9 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
         }
 
-        brand.addView(text("✦  IBC APP", 27f, gold, true))
+        brand.addView(text("✦  Italian Barrista cafe ", 27f, gold, true))
         brand.addView(
-            text("MENU MANAGEMENT  •  BY ANMOL RAI", 10f, muted, true)
+            text("IBC Learning App •  BY Anmol Rai", 10f, muted, true)
         )
 
         brandRow.addView(
@@ -328,7 +328,7 @@ class MainActivity : Activity() {
             }
         )
 
-        header.addView(text("WELCOME BACK", 10f, gold, true))
+        header.addView(text("# Surrender to the Taste ", 10f, gold, true))
         header.addView(
             text("Your menu, beautifully managed.", 15f, cream)
         )
