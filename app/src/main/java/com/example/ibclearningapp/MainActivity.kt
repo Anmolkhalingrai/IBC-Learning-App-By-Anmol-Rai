@@ -1,4 +1,3 @@
-
 package com.example.ibclearningapp
 
 import android.app.Activity
@@ -38,6 +37,12 @@ class MainActivity : Activity() {
     private val ink = Color.rgb(40, 43, 37)
     private val muted = Color.rgb(115, 115, 105)
 
+    private val IMAGE_REQUEST = 1001
+    private val EXPORT_REQUEST = 1002
+    private val IMPORT_REQUEST = 1003
+
+    private var pendingImageDish: Dish? = null
+
     private val categories = mutableListOf(
         "Salads", "Soups", "Starters", "Dynamites",
         "Baked Potatoes", "Pasta & Special", "Burgers",
@@ -58,27 +63,6 @@ class MainActivity : Activity() {
         getSharedPreferences("IBC_MENU_DATA", MODE_PRIVATE)
     }
 
-    private val imagePicker =
-        registerForActivityResult(
-            android.app.ActivityResultContracts.GetContent()
-        ) { uri: Uri? ->
-            if (uri != null && pendingImageDish != null) {
-                try {
-                    contentResolver.takePersistableUriPermission(
-                        uri,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    )
-                } catch (_: Exception) {}
-
-                pendingImageDish?.image = uri.toString()
-                saveData()
-                showHomeScreen()
-                pendingImageDish = null
-            }
-        }
-
-    private var pendingImageDish: Dish? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         loadData()
@@ -92,6 +76,7 @@ class MainActivity : Activity() {
 
             categories.clear()
             val savedCategories = root.optJSONArray("categories")
+
             if (savedCategories != null) {
                 for (i in 0 until savedCategories.length()) {
                     categories.add(savedCategories.getString(i))
@@ -100,12 +85,17 @@ class MainActivity : Activity() {
 
             dishes.clear()
             val savedDishes = root.optJSONArray("dishes")
+
             if (savedDishes != null) {
                 for (i in 0 until savedDishes.length()) {
                     val item = savedDishes.getJSONObject(i)
+
                     dishes.add(
                         Dish(
-                            id = item.optString("id", UUID.randomUUID().toString()),
+                            id = item.optString(
+                                "id",
+                                UUID.randomUUID().toString()
+                            ),
                             name = item.optString("name"),
                             price = item.optString("price"),
                             category = item.optString("category"),
@@ -119,7 +109,11 @@ class MainActivity : Activity() {
                 }
             }
         } catch (_: Exception) {
-            Toast.makeText(this, "Could not load menu", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                "Could not load menu",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -129,7 +123,9 @@ class MainActivity : Activity() {
             val categoryArray = JSONArray()
             val dishArray = JSONArray()
 
-            categories.forEach { categoryArray.put(it) }
+            categories.forEach {
+                categoryArray.put(it)
+            }
 
             dishes.forEach { dish ->
                 val item = JSONObject()
@@ -149,8 +145,13 @@ class MainActivity : Activity() {
             root.put("dishes", dishArray)
 
             prefs.edit().putString("menu", root.toString()).apply()
+
         } catch (_: Exception) {
-            Toast.makeText(this, "Could not save menu", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                "Could not save menu",
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -185,7 +186,11 @@ class MainActivity : Activity() {
             textSize = size
             setTextColor(color)
             gravity = Gravity.CENTER
-            if (bold) typeface = Typeface.DEFAULT_BOLD
+
+            if (bold) {
+                typeface = Typeface.DEFAULT_BOLD
+            }
+
             setPadding(8, 8, 8, 8)
         }
     }
@@ -222,6 +227,7 @@ class MainActivity : Activity() {
         header.addView(
             text("MENU MANAGEMENT • BY ANMOL RAI", 11f, cream)
         )
+
         root.addView(header)
 
         val content = LinearLayout(this).apply {
@@ -279,10 +285,12 @@ class MainActivity : Activity() {
         }
 
         val allButton = button("All", green)
+
         allButton.setOnClickListener {
             selectedCategory = "All"
             showHomeScreen()
         }
+
         categoryRow.addView(allButton)
 
         categories.forEach { category ->
@@ -305,7 +313,11 @@ class MainActivity : Activity() {
         }
 
         categoryScroll.addView(categoryRow)
-        content.addView(categoryScroll, LinearLayout.LayoutParams(-1, 55))
+
+        content.addView(
+            categoryScroll,
+            LinearLayout.LayoutParams(-1, 55)
+        )
 
         val actions = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -313,11 +325,13 @@ class MainActivity : Activity() {
         }
 
         val addDishButton = button("+ Add Dish", green)
+
         addDishButton.setOnClickListener {
             showDishEditor(null)
         }
 
         val manageButton = button("Manage Sections", forest)
+
         manageButton.setOnClickListener {
             manageCategories()
         }
@@ -353,6 +367,7 @@ class MainActivity : Activity() {
         )
 
         val dishScroll = ScrollView(this)
+
         dishContainer = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
         }
@@ -365,6 +380,7 @@ class MainActivity : Activity() {
         )
 
         val backupButton = button("BACKUP & RESTORE", forest)
+
         backupButton.setOnClickListener {
             showBackupInfo()
         }
@@ -376,18 +392,29 @@ class MainActivity : Activity() {
             }
         )
 
-        root.addView(content, LinearLayout.LayoutParams(-1, 0, 1f))
+        root.addView(
+            content,
+            LinearLayout.LayoutParams(-1, 0, 1f)
+        )
+
         setContentView(root)
 
         searchInput.setText(searchText)
 
         searchInput.addTextChangedListener(object : TextWatcher {
+
             override fun beforeTextChanged(
-                s: CharSequence?, start: Int, count: Int, after: Int
+                s: CharSequence?,
+                start: Int,
+                count: Int,
+                after: Int
             ) {}
 
             override fun onTextChanged(
-                s: CharSequence?, start: Int, before: Int, count: Int
+                s: CharSequence?,
+                start: Int,
+                before: Int,
+                count: Int
             ) {
                 searchText = s.toString()
                 renderDishes()
@@ -399,7 +426,10 @@ class MainActivity : Activity() {
         renderDishes()
     }
 
-    private fun statCard(label: String, value: String): LinearLayout {
+    private fun statCard(
+        label: String,
+        value: String
+    ): LinearLayout {
         val card = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
@@ -409,6 +439,7 @@ class MainActivity : Activity() {
 
         card.addView(text(value, 22f, forest, true))
         card.addView(text(label, 10f, muted, true))
+
         return card
     }
 
@@ -418,8 +449,10 @@ class MainActivity : Activity() {
         dishContainer.removeAllViews()
 
         val filtered = dishes.filter { dish ->
+
             val matchesCategory =
-                selectedCategory == "All" || dish.category == selectedCategory
+                selectedCategory == "All" ||
+                dish.category == selectedCategory
 
             val matchesSearch =
                 dish.name.contains(searchText, ignoreCase = true) ||
@@ -430,7 +463,11 @@ class MainActivity : Activity() {
 
         if (filtered.isEmpty()) {
             dishContainer.addView(
-                text("No dishes found. Add your first dish.", 14f, muted)
+                text(
+                    "No dishes found. Add your first dish.",
+                    14f,
+                    muted
+                )
             )
             return
         }
@@ -460,14 +497,18 @@ class MainActivity : Activity() {
         details.addView(text(dish.category, 12f, muted))
         details.addView(text("OMR ${dish.price}", 15f, green, true))
 
-        row.addView(details, LinearLayout.LayoutParams(0, -2, 1f))
+        row.addView(
+            details,
+            LinearLayout.LayoutParams(0, -2, 1f)
+        )
 
         val more = button("⋮", forest)
+
         more.setOnClickListener {
             showDishOptions(dish)
         }
-        row.addView(more)
 
+        row.addView(more)
         card.addView(row)
 
         if (dish.image.isNotBlank()) {
@@ -476,6 +517,7 @@ class MainActivity : Activity() {
                 imageView.setImageURI(Uri.parse(dish.image))
                 imageView.adjustViewBounds = true
                 imageView.scaleType = ImageView.ScaleType.CENTER_CROP
+
                 card.addView(
                     imageView,
                     LinearLayout.LayoutParams(-1, 180)
@@ -484,15 +526,21 @@ class MainActivity : Activity() {
         }
 
         if (dish.ingredients.isNotBlank()) {
-            card.addView(text("Ingredients: ${dish.ingredients}", 12f, muted))
+            card.addView(
+                text("Ingredients: ${dish.ingredients}", 12f, muted)
+            )
         }
 
         if (dish.gsa.isNotBlank()) {
-            card.addView(text("GSA: ${dish.gsa}", 12f, muted))
+            card.addView(
+                text("GSA: ${dish.gsa}", 12f, muted)
+            )
         }
 
         if (dish.allergens.isNotBlank()) {
-            card.addView(text("Allergens: ${dish.allergens}", 12f, muted))
+            card.addView(
+                text("Allergens: ${dish.allergens}", 12f, muted)
+            )
         }
 
         card.setOnClickListener {
@@ -551,13 +599,17 @@ class MainActivity : Activity() {
             inputType =
                 android.text.InputType.TYPE_CLASS_NUMBER or
                 android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+
             setText(existing?.price ?: "")
         }
 
         val categorySpinner = Spinner(this)
         val categoryOptions = categories.toMutableList()
 
-        if (existing != null && !categoryOptions.contains(existing.category)) {
+        if (
+            existing != null &&
+            !categoryOptions.contains(existing.category)
+        ) {
             categoryOptions.add(existing.category)
         }
 
@@ -569,16 +621,24 @@ class MainActivity : Activity() {
 
         if (existing != null) {
             val position = categoryOptions.indexOf(existing.category)
-            if (position >= 0) categorySpinner.setSelection(position)
+
+            if (position >= 0) {
+                categorySpinner.setSelection(position)
+            }
         }
 
         fields.addView(nameInput)
         fields.addView(priceInput)
-        fields.addView(text("Select menu section", 13f, forest, true))
+        fields.addView(
+            text("Select menu section", 13f, forest, true)
+        )
         fields.addView(categorySpinner)
 
         val dialog = AlertDialog.Builder(this)
-            .setTitle(if (existing == null) "Add Dish" else "Edit Dish")
+            .setTitle(
+                if (existing == null) "Add Dish"
+                else "Edit Dish"
+            )
             .setView(fields)
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Save", null)
@@ -587,6 +647,7 @@ class MainActivity : Activity() {
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE)
                 .setOnClickListener {
+
                     val name = nameInput.text.toString().trim()
                     val price = priceInput.text.toString().trim()
 
@@ -620,7 +681,8 @@ class MainActivity : Activity() {
                     } else {
                         existing.name = name
                         existing.price = price
-                        existing.category = categorySpinner.selectedItem.toString()
+                        existing.category =
+                            categorySpinner.selectedItem.toString()
                     }
 
                     saveData()
@@ -631,8 +693,11 @@ class MainActivity : Activity() {
 
         dialog.show()
     }
-    
-    private fun editInformation(dish: Dish, type: String) {
+
+    private fun editInformation(
+        dish: Dish,
+        type: String
+    ) {
         val current = when (type) {
             "Ingredients" -> dish.ingredients
             "GSA" -> dish.gsa
@@ -651,10 +716,16 @@ class MainActivity : Activity() {
             .setView(input)
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Save") { _, _ ->
+
                 when (type) {
-                    "Ingredients" -> dish.ingredients = input.text.toString()
-                    "GSA" -> dish.gsa = input.text.toString()
-                    "Allergens" -> dish.allergens = input.text.toString()
+                    "Ingredients" ->
+                        dish.ingredients = input.text.toString()
+
+                    "GSA" ->
+                        dish.gsa = input.text.toString()
+
+                    "Allergens" ->
+                        dish.allergens = input.text.toString()
                 }
 
                 saveData()
@@ -673,10 +744,13 @@ class MainActivity : Activity() {
 
         AlertDialog.Builder(this)
             .setTitle("Manage Add-ons")
-            .setMessage("Enter add-on name and price, one per line.")
+            .setMessage(
+                "Enter add-on name and price, one per line."
+            )
             .setView(input)
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Save") { _, _ ->
+
                 dish.addons = input.text.toString()
                 saveData()
                 showHomeScreen()
@@ -690,6 +764,7 @@ class MainActivity : Activity() {
             inputType =
                 android.text.InputType.TYPE_CLASS_NUMBER or
                 android.text.InputType.TYPE_NUMBER_FLAG_DECIMAL
+
             setText(dish.price)
         }
 
@@ -698,6 +773,7 @@ class MainActivity : Activity() {
             .setView(input)
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Save") { _, _ ->
+
                 val price = input.text.toString().trim()
 
                 if (price.isEmpty()) {
@@ -713,19 +789,28 @@ class MainActivity : Activity() {
                 }
             }
             .show()
-    }
-
-    private fun chooseFoodPicture(dish: Dish) {
+    }    private fun chooseFoodPicture(dish: Dish) {
         pendingImageDish = dish
-        imagePicker.launch("image/*")
+
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            type = "image/*"
+            addCategory(Intent.CATEGORY_OPENABLE)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+        }
+
+        startActivityForResult(intent, IMAGE_REQUEST)
     }
 
     private fun deleteDish(dish: Dish) {
         AlertDialog.Builder(this)
             .setTitle("Delete Dish")
-            .setMessage("Are you sure you want to delete ${dish.name}?")
+            .setMessage(
+                "Are you sure you want to delete ${dish.name}?"
+            )
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Delete") { _, _ ->
+
                 dishes.remove(dish)
                 saveData()
                 showHomeScreen()
@@ -768,6 +853,7 @@ class MainActivity : Activity() {
             .setView(input)
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Add") { _, _ ->
+
                 val name = input.text.toString().trim()
 
                 if (name.isEmpty()) {
@@ -776,12 +862,16 @@ class MainActivity : Activity() {
                         "Enter section name",
                         Toast.LENGTH_SHORT
                     ).show()
-                } else if (categories.any { it.equals(name, true) }) {
+
+                } else if (
+                    categories.any { it.equals(name, true) }
+                ) {
                     Toast.makeText(
                         this,
                         "Section already exists",
                         Toast.LENGTH_SHORT
                     ).show()
+
                 } else {
                     categories.add(name)
                     saveData()
@@ -793,11 +883,16 @@ class MainActivity : Activity() {
 
     private fun renameCategory() {
         if (categories.isEmpty()) {
-            Toast.makeText(this, "No sections available", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                "No sections available",
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
 
         val spinner = Spinner(this)
+
         spinner.adapter = ArrayAdapter(
             this,
             android.R.layout.simple_spinner_dropdown_item,
@@ -821,16 +916,22 @@ class MainActivity : Activity() {
             .setView(layout)
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Rename") { _, _ ->
+
                 val oldName = spinner.selectedItem.toString()
                 val newName = input.text.toString().trim()
 
-                if (newName.isNotEmpty() &&
-                    !categories.any { it.equals(newName, true) && it != oldName }
+                if (
+                    newName.isNotEmpty() &&
+                    !categories.any {
+                        it.equals(newName, true) && it != oldName
+                    }
                 ) {
                     val index = categories.indexOf(oldName)
                     categories[index] = newName
 
-                    dishes.filter { it.category == oldName }.forEach {
+                    dishes.filter {
+                        it.category == oldName
+                    }.forEach {
                         it.category = newName
                     }
 
@@ -840,6 +941,7 @@ class MainActivity : Activity() {
 
                     saveData()
                     showHomeScreen()
+
                 } else {
                     Toast.makeText(
                         this,
@@ -853,11 +955,16 @@ class MainActivity : Activity() {
 
     private fun deleteCategory() {
         if (categories.isEmpty()) {
-            Toast.makeText(this, "No sections available", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                "No sections available",
+                Toast.LENGTH_SHORT
+            ).show()
             return
         }
 
         val spinner = Spinner(this)
+
         spinner.adapter = ArrayAdapter(
             this,
             android.R.layout.simple_spinner_dropdown_item,
@@ -872,9 +979,12 @@ class MainActivity : Activity() {
             .setView(spinner)
             .setNegativeButton("Cancel", null)
             .setPositiveButton("Delete") { _, _ ->
+
                 val category = spinner.selectedItem.toString()
 
-                dishes.filter { it.category == category }.forEach {
+                dishes.filter {
+                    it.category == category
+                }.forEach {
                     it.category = "Uncategorized"
                 }
 
@@ -907,23 +1017,128 @@ class MainActivity : Activity() {
             .show()
     }
 
-    private val backupExporter =
-        registerForActivityResult(
-            android.app.ActivityResultContracts.CreateDocument(
-                "application/json"
+    private fun createBackup(): String {
+        val root = JSONObject()
+        val categoryArray = JSONArray()
+        val dishArray = JSONArray()
+
+        categories.forEach {
+            categoryArray.put(it)
+        }
+
+        dishes.forEach { dish ->
+            val item = JSONObject()
+
+            item.put("id", dish.id)
+            item.put("name", dish.name)
+            item.put("price", dish.price)
+            item.put("category", dish.category)
+            item.put("ingredients", dish.ingredients)
+            item.put("gsa", dish.gsa)
+            item.put("allergens", dish.allergens)
+            item.put("addons", dish.addons)
+            item.put("image", dish.image)
+
+            dishArray.put(item)
+        }
+
+        root.put("categories", categoryArray)
+        root.put("dishes", dishArray)
+
+        return root.toString(2)
+    }
+
+    private fun exportBackup() {
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+            putExtra(
+                Intent.EXTRA_TITLE,
+                "IBC_Menu_Backup.json"
             )
-        ) { uri: Uri? ->
-            if (uri != null) {
+        }
+
+        startActivityForResult(intent, EXPORT_REQUEST)
+    }
+
+    private fun importBackup() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+            putExtra(
+                Intent.EXTRA_MIME_TYPES,
+                arrayOf("application/json", "text/plain")
+            )
+        }
+
+        startActivityForResult(intent, IMPORT_REQUEST)
+    }
+
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?
+    ) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (resultCode != RESULT_OK) return
+
+        val uri = data?.data ?: return
+
+        when (requestCode) {
+
+            IMAGE_REQUEST -> {
+                try {
+                    val flags =
+                        data.flags and Intent.FLAG_GRANT_READ_URI_PERMISSION
+
+                    try {
+                        contentResolver.takePersistableUriPermission(
+                            uri,
+                            flags
+                        )
+                    } catch (_: Exception) {
+                        // Continue even if persistent permission is unavailable.
+                    }
+
+                    pendingImageDish?.image = uri.toString()
+                    saveData()
+
+                    pendingImageDish = null
+                    showHomeScreen()
+
+                    Toast.makeText(
+                        this,
+                        "Food picture updated",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                } catch (e: Exception) {
+                    pendingImageDish = null
+
+                    Toast.makeText(
+                        this,
+                        "Could not load picture: ${e.message}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+
+            EXPORT_REQUEST -> {
                 try {
                     contentResolver.openOutputStream(uri)?.use { output ->
-                        output.write(createBackup().toByteArray(Charsets.UTF_8))
-                    }
+                        output.write(
+                            createBackup().toByteArray(Charsets.UTF_8)
+                        )
+                    } ?: throw Exception("Could not open backup file")
 
                     Toast.makeText(
                         this,
                         "Backup exported successfully",
                         Toast.LENGTH_LONG
                     ).show()
+
                 } catch (e: Exception) {
                     Toast.makeText(
                         this,
@@ -932,31 +1147,34 @@ class MainActivity : Activity() {
                     ).show()
                 }
             }
-        }
 
-    private val backupImporter =
-        registerForActivityResult(
-            android.app.ActivityResultContracts.OpenDocument()
-        ) { uri: Uri? ->
-            if (uri != null) {
+            IMPORT_REQUEST -> {
                 try {
-                    val content = contentResolver.openInputStream(uri)
+                    val content = contentResolver
+                        .openInputStream(uri)
                         ?.bufferedReader()
                         ?.use { it.readText() }
+                        ?: throw Exception("Could not read file")
 
-                    if (content.isNullOrBlank()) {
+                    if (content.isBlank()) {
                         throw Exception("Empty backup file")
                     }
 
                     val root = JSONObject(content)
+
                     val newCategories = mutableListOf<String>()
                     val newDishes = mutableListOf<Dish>()
 
-                    val categoryArray = root.getJSONArray("categories")
-                    val dishArray = root.getJSONArray("dishes")
+                    val categoryArray =
+                        root.getJSONArray("categories")
+
+                    val dishArray =
+                        root.getJSONArray("dishes")
 
                     for (i in 0 until categoryArray.length()) {
-                        newCategories.add(categoryArray.getString(i))
+                        newCategories.add(
+                            categoryArray.getString(i)
+                        )
                     }
 
                     for (i in 0 until dishArray.length()) {
@@ -987,6 +1205,7 @@ class MainActivity : Activity() {
                         )
                         .setNegativeButton("Cancel", null)
                         .setPositiveButton("Restore") { _, _ ->
+
                             categories.clear()
                             categories.addAll(newCategories)
 
@@ -1016,41 +1235,5 @@ class MainActivity : Activity() {
                 }
             }
         }
-
-    private fun createBackup(): String {
-        val root = JSONObject()
-        val categoryArray = JSONArray()
-        val dishArray = JSONArray()
-
-        categories.forEach {
-            categoryArray.put(it)
-        }
-
-        dishes.forEach { dish ->
-            val item = JSONObject()
-            item.put("id", dish.id)
-            item.put("name", dish.name)
-            item.put("price", dish.price)
-            item.put("category", dish.category)
-            item.put("ingredients", dish.ingredients)
-            item.put("gsa", dish.gsa)
-            item.put("allergens", dish.allergens)
-            item.put("addons", dish.addons)
-            item.put("image", dish.image)
-            dishArray.put(item)
-        }
-
-        root.put("categories", categoryArray)
-        root.put("dishes", dishArray)
-
-        return root.toString(2)
-    }
-
-    private fun exportBackup() {
-        backupExporter.launch("IBC_Menu_Backup.json")
-    }
-
-    private fun importBackup() {
-        backupImporter.launch(arrayOf("application/json", "text/*"))
     }
 }
