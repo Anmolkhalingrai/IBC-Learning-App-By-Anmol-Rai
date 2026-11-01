@@ -647,77 +647,118 @@ class MainActivity : Activity() {
         return card
     }
 
-    private fun showDishDetails(dish: Dish) {
-        val layout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(18), dp(8), dp(18), dp(8))
-        }
+    
+private fun showDishDetails(dish: Dish) {
+    val layout = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(dp(18), dp(12), dp(18), dp(12))
+        setBackgroundColor(Color.WHITE)
+    }
 
-        if (dish.image.isNotBlank()) {
-            try {
-                val imageView = ImageView(this).apply {
-                    setImageURI(Uri.parse(dish.image))
-                    adjustViewBounds = true
-                    scaleType = ImageView.ScaleType.CENTER_CROP
-                    background = rounded(panelLight, 14)
-                    clipToOutline = true
-                }
-                layout.addView(
-                    imageView,
-                    LinearLayout.LayoutParams(-1, dp(190)).apply {
-                        bottomMargin = dp(12)
-                    }
-                )
-            } catch (_: Exception) {
-                // Continue showing text details if the image cannot be loaded.
+    if (dish.image.isNotBlank()) {
+        try {
+            val imageView = ImageView(this).apply {
+                setImageURI(Uri.parse(dish.image))
+                adjustViewBounds = true
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                background = rounded(panelLight, 14)
+                clipToOutline = true
             }
-        }
 
-        layout.addView(text("OMR ${dish.price}", 17f, gold, true))
-        layout.addView(text("SECTION  •  ${dish.category}", 11f, muted, true))
-
-        if (dish.ingredients.isNotBlank()) {
-            layout.addView(infoLine("INGREDIENTS", dish.ingredients))
-        }
-        if (dish.gsa.isNotBlank()) {
-            layout.addView(infoLine("GOLD STANDARD ATTRIBUTE", dish.gsa))
-        }
-        if (dish.allergens.isNotBlank()) {
-            layout.addView(infoLine("ALLERGENS", dish.allergens))
-        }
-        if (dish.addons.isNotBlank()) {
-            layout.addView(infoLine("ADD-ONS", dish.addons))
-        }
-
-        if (dish.ingredients.isBlank() && dish.gsa.isBlank() &&
-            dish.allergens.isBlank() && dish.addons.isBlank() &&
-            dish.image.isBlank()
-        ) {
             layout.addView(
-                text("No additional details have been added yet.", 12f, muted)
+                imageView,
+                LinearLayout.LayoutParams(-1, dp(190)).apply {
+                    bottomMargin = dp(14)
+                }
             )
+        } catch (_: Exception) {
+            // Continue without image if unavailable.
         }
-
-        val scroll = ScrollView(this).apply {
-            addView(layout)
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle(dish.name)
-            .setView(scroll)
-            .setPositiveButton("Close", null)
-            .show()
     }
 
-    private fun infoLine(label: String, value: String): LinearLayout {
-        val block = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(0, dp(9), 0, dp(5))
-        }
-        block.addView(text(label, 10f, gold, true))
-        block.addView(text(value, 13f, cream))
-        return block
+    // Dish price
+    layout.addView(
+        text("OMR ${dish.price}", 19f, forest, true)
+    )
+
+    // Menu section
+    layout.addView(
+        text("SECTION  •  ${dish.category}", 12f, Color.DKGRAY, true)
+    )
+
+    // Dish information
+    if (dish.ingredients.isNotBlank()) {
+        layout.addView(infoLine("INGREDIENTS", dish.ingredients))
     }
+
+    if (dish.gsa.isNotBlank()) {
+        layout.addView(
+            infoLine("GOLD STANDARD ATTRIBUTE", dish.gsa)
+        )
+    }
+
+    if (dish.allergens.isNotBlank()) {
+        layout.addView(infoLine("ALLERGENS", dish.allergens))
+    }
+
+    if (dish.addons.isNotBlank()) {
+        layout.addView(infoLine("ADD-ONS", dish.addons))
+    }
+
+    if (dish.ingredients.isBlank() &&
+        dish.gsa.isBlank() &&
+        dish.allergens.isBlank() &&
+        dish.addons.isBlank() &&
+        dish.image.isBlank()
+    ) {
+        layout.addView(
+            text(
+                "No additional details have been added yet.",
+                13f,
+                Color.DKGRAY
+            )
+        )
+    }
+
+    val scroll = ScrollView(this).apply {
+        setBackgroundColor(Color.WHITE)
+        isFillViewport = false
+        addView(layout)
+    }
+
+    val dialog = AlertDialog.Builder(this)
+        .setTitle(dish.name)
+        .setView(scroll)
+        .setPositiveButton("CLOSE", null)
+        .create()
+
+    dialog.show()
+
+    // Make dialog buttons readable.
+    dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+        ?.setTextColor(forest)
+}
+    
+private fun infoLine(label: String, value: String): LinearLayout {
+    val block = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(0, dp(12), 0, dp(8))
+        setBackgroundColor(Color.WHITE)
+    }
+
+    // Heading
+    block.addView(
+        text(label, 11f, forest, true)
+    )
+
+    // Actual information
+    block.addView(
+        text(value, 14f, Color.DKGRAY, false)
+    )
+
+    return block
+}
+
 
     private fun showDishOptions(dish: Dish) {
         val options = arrayOf(
