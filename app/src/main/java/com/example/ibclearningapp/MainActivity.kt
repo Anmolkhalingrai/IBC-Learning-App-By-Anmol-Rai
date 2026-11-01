@@ -330,7 +330,7 @@ class MainActivity : Activity() {
 
         header.addView(text("# Surrender to the Taste ", 10f, gold, true))
         header.addView(
-            text("Your menu, beautifully managed.", 15f, cream)
+            text("Managed by Abidh Abdulkathar.", 15f, cream)
         )
 
         content.addView(header)
